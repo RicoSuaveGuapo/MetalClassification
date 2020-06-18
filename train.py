@@ -31,8 +31,8 @@ def build_argparse():
 
     # Hyperparameter
     parser.add_argument('--learning_rate', default=0.01)
-    parser.add_argument('--lr_gamma', default=0.1)
-    parser.add_argument('--lr_step_size', default=1)
+    # parser.add_argument('--lr_gamma', default=0.1)
+    # parser.add_argument('--lr_step_size', default=1)
 
     # Loop control
     parser.add_argument('--epoch', type=int, default = 1)
@@ -68,9 +68,14 @@ def build_train_val_test_dataset(args):
 
     return train_dataloader, val_dataloader, test_dataloader
 
+def freeze_pretrain(model):
+    for name, par in model.named_parameters():
+        if cnn_model in name:
+            par.requires_grad = False
+
 
 def build_scheduler(optimizer):
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode = 'min')
     
     return scheduler
 
@@ -122,8 +127,12 @@ def main():
         # TRAINING LOOP
         print('---Training Loop begins---')
         read_time = time.time()
+        
+        # solving bact_size issue
+        optimizer.zero_grad()
+
         for i, data in enumerate(train_dataloader, start=0):
-            # print(f'---data time: %.1f sec' % (time.time() - read_time))
+            
             # --- test section---
             if args.test_section:
                 if i == 1:
@@ -133,13 +142,17 @@ def main():
             # move CUDA device
             input, target = data[0].to(device), data[1].to(device)
 
-            optimizer.zero_grad()
+            
             output = model(input)
 
             loss = criterion(output, target)
 
             loss.backward()
-            optimizer.step()
+
+            # solving bact_size issue
+            if (i+1)%args.batch_size == 0:
+                optimizer.step()
+                optimizer.zero_grad()
 
             train_running_loss += loss.item()
             writer.add_scalar('Averaged loss', loss.item(), int(8511*0.6/args.batch_size)*epoch + i)
@@ -149,9 +162,9 @@ def main():
             )
             train_running_loss = 0.0
         
-        print('Epoch:', epoch+1,'LR:', scheduler.get_last_lr()[0])
-        writer.add_scalar('Learning Rate', scheduler.get_last_lr()[0], epoch)
-        scheduler.step()
+        lr = [group['lr'] for group in optimizer.param_groups]
+        print('Epoch:', epoch+1,'LR:', lr[0])
+        writer.add_scalar('Learning Rate', lr[0], epoch)
 
         print('---Training Loop ends---')
         print(f'---Training spend time: %.1f sec' % (time.time() - start_time))
@@ -188,6 +201,8 @@ def main():
             accuracy = (100 * correct_count/total_count)
             val_run_loss = val_run_loss/batch_count
             
+            scheduler.step(val_run_loss)
+
             writer.add_scalar('Validation accuracy', accuracy, epoch)
             writer.add_scalar('Validation loss', val_run_loss, epoch)
 
@@ -216,5 +231,12 @@ if __name__ == '__main__':
     print(f'--- %.1f seconds ---' % (time.time() - start_time))
 
 # --- code snippet ---
-# tensorboard --logdir runs/trial_2/
+# tensorboard --logdir runs/trial_X/
 # time python yourprogram.py
+
+
+    # def freeze_pretrain(model):
+    #     for name, par in model.named_parameters():
+    #         print(name)
+    # model = MetalModel(model_name='se_resnet152',hidden_dim=128)
+    # freeze_pretrain(model)

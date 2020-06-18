@@ -4,12 +4,10 @@
 
 ## TODO
 1. Adam then SGD+momentum for fine-tuning
-2. EfficientNet adjust
-3. batch_size too small problem: accumulating gradient
-see https://discuss.pytorch.org/t/why-do-we-need-to-set-the-gradients-manually-to-zero-in-pytorch/4903/20
+2. Early Stop
 
 ## 6/18
-#### Test run 1 (trial 12)
+#### Test run 1 (file missing)
 1. StepLR(step_size=3, gamma=0.1)
 2. model_name 'se_resnet50'
 :::info
@@ -18,19 +16,39 @@ epoch 12 72.2 %
 1374.3 sec
 :::
 
-#### Test run 2 
+#### Test run 2 (trial 13)
 1. StepLR -> ReduceLROnPlateau
-2. Pretrainmodel parameter freeze
+2. solving batch_size issue
+3. model_name 'efficientnet-b7'
+:::info
+batch_size = 5
+epoch 1 12.14 % 
+246.9 sec
+:::
+
+#### Test run 3 (trial 15)
+1. StepLR -> ReduceLROnPlateau
+2. solving batch_size issue
+3. model_name 'se_resnet152'
+:::info
+batch_size = 16
+epoch 10 77.67 %
+1276.7 sec
+:::
+
+
+#### Test run 4
+1. Pretrainmodel parameter freeze
     1. freeze pretrain model parameter, using default lr
     2. while training stop improve，lr to pretrainmodel lr， then lr scheduler.
 :::info
 
 :::
 
-#### Test run 3
+#### Test run 5
 1. CrossEntropy -> WeightFocalLoss
 :::info
-1 epoch: 
+
 :::
 
 

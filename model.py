@@ -28,7 +28,6 @@ class MetalModel(nn.Module):
             dim_feats= self.cnn_model._fc.in_features
 
         else:
-            # TODO: whether use pretrained or note
             self.cnn_model = pretrainedmodels.__dict__[model_name](num_classes=1000, pretrained='imagenet') 
             dim_feats = self.cnn_model.last_linear.in_features  
         
