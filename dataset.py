@@ -15,8 +15,6 @@ class MetalDataset(Dataset):
         assert mode in ['train', 'test', 'val']
         super().__init__()
 
-        # self.data = ImageFolder(path)
-
         assert os.getcwd() == '/home/rico-li/Job/Metal', 'in the wrong working directory'
         path = os.getcwd()+'/Image'
         class_names = os.listdir(path)

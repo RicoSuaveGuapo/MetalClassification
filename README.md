@@ -6,6 +6,39 @@
 1. Adam then SGD+momentum for fine-tuning
 2. Early Stop
 
+## 6/20
+#### Test run 1 (trial 18)
+1. Pretrainmodel parameter freeze
+    1. freeze pretrain model parameter, using default lr
+    :::info
+    --epoch 10 --model_name 'se_resnet152' --batch_size 16
+    epoch 10 59.07 %
+    :::
+    2. Loading the previous model path, then unfreeze the model, and change the lr to smaller one.
+    :::info
+
+    :::
+
+
+#### Test run 2
+Using the cluster dataset
+:::info
+
+:::
+
+
+## 6/19
+#### Test run 1 (trial 17)
+1. CrossEntropy -> WeightFocalLoss
+:::info
+'se_resnet50'
+batch_size 32
+epoch 12 30.1 %
+:::
+
+
+
+
 ## 6/18
 #### Test run 1 (file missing)
 1. StepLR(step_size=3, gamma=0.1)
@@ -34,21 +67,6 @@ epoch 1 12.14 %
 batch_size = 16
 epoch 10 77.67 %
 1276.7 sec
-:::
-
-
-#### Test run 4
-1. Pretrainmodel parameter freeze
-    1. freeze pretrain model parameter, using default lr
-    2. while training stop improve，lr to pretrainmodel lr， then lr scheduler.
-:::info
-
-:::
-
-#### Test run 5
-1. CrossEntropy -> WeightFocalLoss
-:::info
-
 :::
 
 

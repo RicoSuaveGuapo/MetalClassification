@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 import torch.optim as optim
-import torch.optim.lr_scheduler as lr_scheduler
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
@@ -14,6 +14,7 @@ from torchvision.utils import make_grid
 from dataset import MetalDataset
 from transform import get_transfrom, test_transfrom
 from model import MetalModel
+from loss import WeightFocalLoss
 
 def build_argparse():
     parser = argparse.ArgumentParser()
@@ -30,9 +31,9 @@ def build_argparse():
     parser.add_argument('--seed', type=int, default=42)
 
     # Hyperparameter
-    parser.add_argument('--learning_rate', default=0.01)
-    # parser.add_argument('--lr_gamma', default=0.1)
-    # parser.add_argument('--lr_step_size', default=1)
+    parser.add_argument('--learning_rate', type=float,default=0.01)
+    parser.add_argument('--freeze', type=bool, default=False)
+    # parser.add_argument('--lr_scheduler', default=)
 
     # Loop control
     parser.add_argument('--epoch', type=int, default = 1)
@@ -40,6 +41,7 @@ def build_argparse():
 
     # Additional    
     parser.add_argument('--test_section', type=bool, default=False)
+    parser.add_argument('--load_model_para', help='Enter the model.pth file name', default=False)
 
     return parser
 
@@ -68,14 +70,20 @@ def build_train_val_test_dataset(args):
 
     return train_dataloader, val_dataloader, test_dataloader
 
-def freeze_pretrain(model):
-    for name, par in model.named_parameters():
-        if cnn_model in name:
-            par.requires_grad = False
+def freeze_pretrain(model, freeze=True):
+    if freeze:
+        for name, par in model.named_parameters():
+            if name.startswith('cnn_model'):
+                par.requires_grad = False
+    else:
+        for name, par in model.named_parameters():
+            if name.startswith('cnn_model'):
+                par.requires_grad = True
+            
 
 
 def build_scheduler(optimizer):
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode = 'min')
+    scheduler = ReduceLROnPlateau(optimizer, mode = 'min')
     
     return scheduler
 
@@ -101,10 +109,23 @@ def main():
     # model
     model = MetalModel(model_name = args.model_name, hidden_dim=args.hidden_dim, activation=args.activation)
 
+    # pretrained model freeze
+    if args.freeze:
+        freeze_pretrain(model, True)
+    else:
+        freeze_pretrain(model, False)
+
+    # loading previous model parameters or not
+    if args.load_model_para:
+        model.load_state_dict(torch.load('/home/rico-li/Job/Metal/model_save/'+args.load_model_para))
+    else:
+        pass
+
     # pass to CUDA device
     model = model.to(device)
     
-    # TODO: will change
+    # TODO: need to discuss
+    # criterion = WeightFocalLoss()
     criterion = nn.CrossEntropyLoss()
 
     optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.learning_rate, nesterov=True, weight_decay=0.01)
@@ -237,6 +258,9 @@ if __name__ == '__main__':
 
     # def freeze_pretrain(model):
     #     for name, par in model.named_parameters():
-    #         print(name)
+    #         if name.startswith('cnn_model'):
+    #             print(name)
     # model = MetalModel(model_name='se_resnet152',hidden_dim=128)
     # freeze_pretrain(model)
+
+# python train.py --exp 19 --epoch 10 --model_name 'se_resnet152' --batch_size 16 --load_model_para 18_se_resnet152.pth --learning_rate 0.005

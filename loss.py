@@ -3,8 +3,10 @@ import torch.nn as nn
 
 
 def weighted_CrossEntropy(reduction):
-    weight = torch.tensor([0.0501, 0.0248, 0.0344, 0.0654, 0.0356, 0.1110, 0.0478, 0.1621, 0.0921,
+    device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+    pt = torch.tensor([0.0501, 0.0248, 0.0344, 0.0654, 0.0356, 0.1110, 0.0478, 0.1621, 0.0921,
                            0.2281, 0.0019, 0.1131, 0.0105, 0.0137, 0.0093], dtype=torch.float32)
+    weight = (1/pt).to(device)
     loss = nn.CrossEntropyLoss(weight=weight, reduction=reduction)
 
     return loss
