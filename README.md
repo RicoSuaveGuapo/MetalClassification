@@ -7,16 +7,23 @@
 2. Early Stop
 
 ## 6/20
-#### Test run 1 (trial 18)
+#### Test run 1 (trial 18 & 19)
 1. Pretrainmodel parameter freeze
     1. freeze pretrain model parameter, using default lr
     :::info
+    trial 18: 
+    lr = 0.01
     --epoch 10 --model_name 'se_resnet152' --batch_size 16
-    epoch 10 59.07 %
+    59.07 %
+    1120.5 sec
     :::
+
     2. Loading the previous model path, then unfreeze the model, and change the lr to smaller one.
     :::info
-
+    trial 19:
+    lr = 0.005
+    --epoch 10 --model_name 'se_resnet152' --batch_size 16
+    87.5 %
     :::
 
 
