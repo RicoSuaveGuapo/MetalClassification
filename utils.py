@@ -9,6 +9,29 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.datasets import ImageFolder
 
+
+def train_val_test_index(label: list, whichindex: str, val_split: float, test_split: float)-> list:
+    label = np.array(label)
+    index_list_uni = np.unique(label)
+    train_index = []
+    val_index = []
+    test_index = []
+
+    for i in index_list_uni:
+        index = np.where(label == i)
+        class_index = np.random.permutation(index[0]).tolist()
+        train_index += class_index[:round(len(class_index)*(1-val_split-test_split))]
+        val_index += class_index[round(len(class_index)*(1-val_split-test_split)): round(len(class_index)*(1-test_split))]
+        test_index += class_index[round(len(class_index)*(1-test_split)):]
+    
+    if whichindex == 'train':
+        return train_index
+    elif whichindex == 'val':
+        return val_index
+    else:
+        return test_index
+
+
 def imageFoldercv2():
     original_path = os.getcwd()
     assert original_path == '/home/rico-li/Job/Metal', 'note that working directory'
