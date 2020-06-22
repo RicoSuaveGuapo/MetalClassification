@@ -3,8 +3,11 @@
 # Work Log
 
 ## TODO
-1. Adam then SGD+momentum for fine-tuning
-2. Early Stop
+1. class distribution into the train/val/test set.
+2. Adam then SGD+momentum for fine-tuning
+3. Early Stop
+4. Increase the amount of epoch of freeze model
+5. Using the cluster dataset
 
 ## 6/20
 #### Test run 1 (trial 18 & 19)
@@ -24,14 +27,11 @@
     lr = 0.005
     --epoch 10 --model_name 'se_resnet152' --batch_size 16
     87.5 %
+    1258.5 sec 
     :::
 
 
-#### Test run 2
-Using the cluster dataset
-:::info
 
-:::
 
 
 ## 6/19
