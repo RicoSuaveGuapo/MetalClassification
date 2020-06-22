@@ -3,14 +3,37 @@
 # Work Log
 
 ## TODO
-1. class distribution into the train/val/test set.
-2. Adam then SGD+momentum for fine-tuning
-3. Early Stop
-4. Increase the amount of epoch of freeze model
-5. Using the cluster dataset
+1. Adam then SGD+momentum for fine-tuning
+2. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
+3. Using the cluster dataset
+4. Mixup
+5. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
+
+## 6/23
+#### Test run 1
+
+
+## 6/22
+#### Test run 1 (trial 22 & 23)
+1. Using class distribution train/val/test set
+2. Pretrain trial:
+    Freeze
+    :::info 
+    --epoch 15 --model_name 'se_resnet152' --batch_size 16
+    64.1 %
+    1645.0 sec
+    :::
+
+    Unfreeze
+    :::info 
+    --epoch 20 --model_name 'se_resnet152' --batch_size 16
+    81.36 %
+    3100.4 sec
+    :::
+
 
 ## 6/20
-#### Test run 1 (trial 18 & 19)
+#### Test run 1 (trial 18 & 19<-file get messup @@)
 1. Pretrainmodel parameter freeze
     1. freeze pretrain model parameter, using default lr
     :::info
@@ -29,9 +52,6 @@
     87.5 %
     1258.5 sec 
     :::
-
-
-
 
 
 ## 6/19

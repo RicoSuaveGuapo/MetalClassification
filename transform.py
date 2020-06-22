@@ -7,6 +7,7 @@ import torch
 import numpy as np
 
 # TODO: perspective transformation
+# TODO: Upsample the minority
 
 def get_transfrom(image, size=512, crop_size=256):
     transform = Compose([ Resize(size,size, interpolation=cv2.INTER_AREA),

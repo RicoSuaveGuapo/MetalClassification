@@ -249,18 +249,12 @@ if __name__ == '__main__':
     start_time = time.time()
     main()
     print('--- Execution time ---')
-    print(f'--- %.1f seconds ---' % (time.time() - start_time))
+    print(f'--- %.1f sec ---' % (time.time() - start_time))
 
 # --- code snippet ---
 # tensorboard --logdir runs/trial_X/
 # time python yourprogram.py
-
-
-    # def freeze_pretrain(model):
-    #     for name, par in model.named_parameters():
-    #         if name.startswith('cnn_model'):
-    #             print(name)
-    # model = MetalModel(model_name='se_resnet152',hidden_dim=128)
-    # freeze_pretrain(model)
-
-# python train.py --exp 19 --epoch 10 --model_name 'se_resnet152' --batch_size 16 --load_model_para 18_se_resnet152.pth --learning_rate 0.005
+# Freeze
+# python train.py --exp 19 --epoch 15 --model_name 'se_resnet152' --batch_size 16 --freeze True
+# Unfreeze and load .pth
+# python train.py --exp 19 --epoch 15 --model_name 'se_resnet152' --batch_size 16 --load_model_para 18_se_resnet152.pth --learning_rate 0.005
