@@ -12,7 +12,7 @@ from utils import Mish
 
 
 class MetalModel(nn.Module):
-    def __init__(self, model_name, hidden_dim, dropout=0.5, activation='relu'):
+    def __init__(self, model_name, hidden_dim, dropout=0.5, activation='relu', cluster_img = False):
         super().__init__()
 
         if activation.lower() == 'relu':
@@ -32,7 +32,10 @@ class MetalModel(nn.Module):
             dim_feats = self.cnn_model.last_linear.in_features  
         
         self.linear1 = nn.Linear(dim_feats, hidden_dim)
-        self.linear2 = nn.Linear(hidden_dim, 15)
+
+        output_classes = 15 if not cluster_img else 66
+        self.linear2 = nn.Linear(hidden_dim, output_classes)
+        
         self.dropout = nn.Dropout(p=dropout) if dropout else None
         self.pool = nn.AdaptiveAvgPool2d((1,1))
         self.act = activation

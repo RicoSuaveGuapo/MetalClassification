@@ -3,15 +3,25 @@
 # Work Log
 
 ## TODO
-1. Adam then SGD+momentum for fine-tuning
-2. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
-3. Using the cluster dataset
+1. Using the cluster dataset w/o synthetic data (V)
+2. Create own cluster dataset 
+3. PCA or t-SNE for feature maps to 2D, to check whether clustering or not.
+2. Adam then SGD+momentum for fine-tuning
+3. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
 4. Mixup
 5. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
 
 ## 6/23
-#### Test run 1
-
+#### Test run 1 (trial 25)
+model_name change to se_resnet152 for default
+batch_size 16 as default
+1. Using the cluster dataset
+    1. Directly use the 66 subclass
+    :::info
+    --epoch 10 -model_name 'se_resnet152' --batch_size 16
+    50.08 %
+    :::
+2. Create own cluster dataset (using the result from trial 23)
 
 ## 6/22
 #### Test run 1 (trial 22 & 23)

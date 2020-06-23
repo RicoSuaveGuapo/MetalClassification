@@ -13,19 +13,21 @@ from utils import train_val_test_index
 class MetalDataset(Dataset):
 
     def __init__(self, mode='train', transform = None, val_split = 0.3, test_spilt = 0.1,
-                image_size = 256, seed = 42):
+                image_size = 256, seed = 42, cluster_img=False):
         assert mode in ['train', 'test', 'val']
         super().__init__()
 
         assert os.getcwd() == '/home/rico-li/Job/Metal', 'in the wrong working directory'
-        path = os.getcwd()+'/Image'
+        path = os.getcwd()+'/Image' if not cluster_img else os.getcwd()+'/stealimage_clustered'
         class_names = os.listdir(path)
         class_names.sort()
         
         label = []
         image_path = []
+        img_names = [] # save the image names
         for i, class_name in enumerate(class_names):
             image_names = os.listdir(f'{path}/{class_name}')
+            img_names += image_names 
             image_path += [f'{path}/{class_name}/{image_name}' for image_name in image_names]
             label += [i] * len(image_names)
 
@@ -37,6 +39,7 @@ class MetalDataset(Dataset):
         self.index_list = train_val_test_index(label, mode, val_split, test_spilt)      
         self.data_path = [image_path[i] for i in self.index_list]
         self.label = [label[i] for i in self.index_list]
+        self.image_names = [img_names[i] for i in self.index_list]
         
             
     def __len__(self):
@@ -47,18 +50,20 @@ class MetalDataset(Dataset):
         path_i = self.data_path[idx]
         image = cv2.imread(path_i, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        image_name = self.image_names[idx]
         
         if self.transform:
             image = get_transfrom(image, crop_size=self.image_size) # tensor
         else:
             image = test_transfrom(image, size=self.image_size) # tensor
 
-        return image, label
+        return image, label, image_name
         
 
 if __name__ == '__main__':
-    dataset = MetalDataset(mode='train', transform=True)
-    dataloader = DataLoader(dataset, batch_size=256, num_workers=0, pin_memory=True, shuffle=True)
+    dataset = MetalDataset(mode='train', transform=True, cluster_img=True)
+    dataloader = DataLoader(dataset, batch_size=10, shuffle=True)
     start_time = time.time()
     for image, label in dataloader:
         print(f'---One batch spends time: %.1f sec' % (time.time() - start_time))

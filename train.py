@@ -20,7 +20,7 @@ def build_argparse():
     parser = argparse.ArgumentParser()
     # Basic
     parser.add_argument('--exp', help='The index of this experiment', type=int, default=1)
-    parser.add_argument('--model_name', default='resnet18')
+    parser.add_argument('--model_name', default='se_resnet152')
     parser.add_argument('--image_size', default = 256, type=int)
     parser.add_argument('--val_split', type=float, default=0.3)
     parser.add_argument('--test_split', type=float, default=0.1)
@@ -37,11 +37,12 @@ def build_argparse():
 
     # Loop control
     parser.add_argument('--epoch', type=int, default = 1)
-    parser.add_argument('--batch_size', type=int, default=128)
+    parser.add_argument('--batch_size', type=int, default=16)
 
     # Additional    
     parser.add_argument('--test_section', type=bool, default=False)
     parser.add_argument('--load_model_para', help='Enter the model.pth file name', default=False)
+    parser.add_argument('--cluster_img', type=bool, default=False)
 
     return parser
 
@@ -60,9 +61,9 @@ def check_argparse(args):
 
 
 def build_train_val_test_dataset(args):
-    train_dataset = MetalDataset(mode='train', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
-    val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
-    test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
+    train_dataset = MetalDataset(mode='train', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed, cluster_img=args.cluster_img)
+    val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed, cluster_img=args.cluster_img)
+    test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed, cluster_img=args.cluster_img)
 
     train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(),batch_size=args.batch_size, shuffle=True)
     val_dataloader   = DataLoader(val_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=True)
@@ -101,13 +102,14 @@ def main():
     print('\n-------- Data Preparing --------\n')
 
     train_dataloader, val_dataloader, test_dataloader = build_train_val_test_dataset(args)
+    print('Using Cluster dataset: ', args.cluster_img)
 
     print('\n-------- Data Preparing Done! --------\n')
 
 
     print('\n-------- Preparing Model --------\n')
     # model
-    model = MetalModel(model_name = args.model_name, hidden_dim=args.hidden_dim, activation=args.activation)
+    model = MetalModel(model_name = args.model_name, hidden_dim=args.hidden_dim, activation=args.activation, cluster_img=args.cluster_img)
 
     # pretrained model freeze
     if args.freeze:
