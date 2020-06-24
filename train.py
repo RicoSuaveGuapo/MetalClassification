@@ -256,6 +256,7 @@ if __name__ == '__main__':
 # --- code snippet ---
 # tensorboard --logdir runs/trial_X/
 # time python yourprogram.py
+
 # Freeze
 # python train.py --exp 19 --epoch 15 --model_name 'se_resnet152' --batch_size 16 --freeze True
 # Unfreeze and load .pth
