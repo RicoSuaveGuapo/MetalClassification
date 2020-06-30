@@ -29,16 +29,24 @@ class MetalDataset(Dataset):
             image_names = os.listdir(f'{path}/{class_name}')
             img_names += image_names 
             image_path += [f'{path}/{class_name}/{image_name}' for image_name in image_names]
-            label += [i] * len(image_names)
+            label += [i] * len(image_names) # change to new cluster labels
 
         self.mode = mode
         self.transform = transform
         self.image_size = image_size
 
         np.random.seed(seed)
-        self.index_list = train_val_test_index(label, mode, val_split, test_spilt)      
+        self.index_list = train_val_test_index(label, mode, val_split, test_spilt)
         self.data_path = [image_path[i] for i in self.index_list]
-        self.label = [label[i] for i in self.index_list]
+
+        # cluster label
+        if mode == 'train':
+            label = torch.load('oneDfea_train_label37')
+            label = label.type(torch.LongTensor).tolist()
+            self.label = label
+        else:
+            self.label = [label[i] for i in self.index_list]
+
         self.image_names = [img_names[i] for i in self.index_list]
         
             
@@ -62,10 +70,10 @@ class MetalDataset(Dataset):
         
 
 if __name__ == '__main__':
-    dataset = MetalDataset(mode='train', transform=True, cluster_img=True)
+    dataset = MetalDataset(mode='val', transform=True, cluster_img=False)
     dataloader = DataLoader(dataset, batch_size=10, shuffle=True)
     start_time = time.time()
-    for image, label in dataloader:
+    for image, label, image_name in dataloader:
         print(f'---One batch spends time: %.1f sec' % (time.time() - start_time))
         print(image.shape)
         print(label)

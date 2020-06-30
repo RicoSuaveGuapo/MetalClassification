@@ -3,11 +3,61 @@
 # Work Log
 
 ## TODO
-1. Create own cluster dataset 
-2. Adam then SGD+momentum for fine-tuning
-3. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
-4. Mixup
-5. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
+1. Adam then SGD+momentum for fine-tuning
+2. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
+3. Mixup, Cutout, RandomBrightnessContrast, HueSaturationValue
+4. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
+5. metric learning
+
+## 6/30
+fix the loss bug.
+see cluster2target
+
+## 6/29
+#### Find the best number of clusters (V)
+k_numbers = [3,3,2,4,4,4,2,2,3,2,0,4,0,0,0]
+#### Modify dataset.py (V)
+#### Modify train.py 
+
+#### Test run 1 (trial 28)
+1. 37 subclasses 
+    :::info
+    3 epochs
+    26.87 %
+    :::
+#### Test run 2 (trial 29 & trial 30)
+1. SGD -> Adam, default parameters
+    :::info
+    3 epochs 
+    27.50 %
+    :::
+    :::info
+    15 epochs
+    train loss is underfitting
+    val loss is overfitting
+    sth is wrong @@
+    check the label!!
+    :::
+
+
+#### Test run 3 (trial 32)
+-> cluster2target fixed!
+apply to train.py
+1. SGD -> Adam, default parameters
+    :::info
+
+    :::
+
+2. Using freeze and unfreeze method
+    freeze
+    :::info
+    
+    :::
+
+    unfreeze
+    :::info
+
+    :::
 
 ## 6/24
 #### Create own cluster dataset
@@ -17,9 +67,6 @@
 2. features from imagenet (V)
     1. well seperate!
     2. kmean can have good seperations
-
-#### Find the best number of clusters
-
 
 
 ## 6/23
@@ -170,4 +217,3 @@ accuracy baseline: 56.7% (trial_3)
 :::
 > file is saved as trial_3
 
-# MetalClassification

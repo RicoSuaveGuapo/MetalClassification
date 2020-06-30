@@ -33,7 +33,7 @@ class MetalModel(nn.Module):
         
         self.linear1 = nn.Linear(dim_feats, hidden_dim)
 
-        output_classes = 15 if not cluster_img else 66
+        output_classes = 37 #15 if not cluster_img else 66 # for cluster labels
         self.linear2 = nn.Linear(hidden_dim, output_classes)
         
         self.dropout = nn.Dropout(p=dropout) if dropout else None
@@ -120,6 +120,8 @@ class MetalModel(nn.Module):
         return x
 if __name__ == '__main__':
     model = MetalModel(model_name='efficientnet-b1', hidden_dim=128)
-    img = torch.randn((1,3,256,256))
+    img = torch.randn((10,3,256,256))
     x = model(img)
-    print(x.size())
+    print(x)
+    _, y = torch.max(x, 1)
+    print(y)

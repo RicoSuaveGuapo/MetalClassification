@@ -15,6 +15,7 @@ from dataset import MetalDataset
 from transform import get_transfrom, test_transfrom
 from model import MetalModel
 from loss import WeightFocalLoss
+from utils import cluster2target
 
 def build_argparse():
     parser = argparse.ArgumentParser()
@@ -61,9 +62,9 @@ def check_argparse(args):
 
 
 def build_train_val_test_dataset(args):
-    train_dataset = MetalDataset(mode='train', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed, cluster_img=args.cluster_img)
-    val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed, cluster_img=args.cluster_img)
-    test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed, cluster_img=args.cluster_img)
+    train_dataset = MetalDataset(mode='train', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
+    val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
+    test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
 
     train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(),batch_size=args.batch_size, shuffle=True)
     val_dataloader   = DataLoader(val_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=True)
@@ -102,7 +103,6 @@ def main():
     print('\n-------- Data Preparing --------\n')
 
     train_dataloader, val_dataloader, test_dataloader = build_train_val_test_dataset(args)
-    print('Using Cluster dataset: ', args.cluster_img)
 
     print('\n-------- Data Preparing Done! --------\n')
 
@@ -130,7 +130,8 @@ def main():
     # criterion = WeightFocalLoss()
     criterion = nn.CrossEntropyLoss()
 
-    optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.learning_rate, nesterov=True, weight_decay=0.01)
+    # optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.learning_rate, nesterov=True, weight_decay=0.01)
+    optimizer = optim.Adam(model.parameters())
     scheduler = build_scheduler(optimizer)
             
     print('\n-------- Preparing Model Done! --------\n')
@@ -210,15 +211,18 @@ def main():
                 input, target = data[0].to(device), data[1].to(device)
 
                 output = model(input)
+                # cluster label to target label
+                output = cluster2target(output)
                 loss = criterion(output, target)
 
                 _, predicted = torch.max(output, 1)
+                # cluster label to target label
+                predicted = cluster2target(predicted)
 
                 val_run_loss += loss.item()
                 batch_count += 1
                 total_count += target.size(0)
                 
-
                 correct_count += (predicted == target).sum().item()
             
             accuracy = (100 * correct_count/total_count)
@@ -258,6 +262,6 @@ if __name__ == '__main__':
 # time python yourprogram.py
 
 # Freeze
-# python train.py --exp 19 --epoch 15 --model_name 'se_resnet152' --batch_size 16 --freeze True
+# python train.py --exp 25 --epoch 10 --freeze True
 # Unfreeze and load .pth
 # python train.py --exp 19 --epoch 15 --model_name 'se_resnet152' --batch_size 16 --load_model_para 18_se_resnet152.pth --learning_rate 0.005
