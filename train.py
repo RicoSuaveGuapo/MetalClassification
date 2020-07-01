@@ -32,7 +32,7 @@ def build_argparse():
     parser.add_argument('--seed', type=int, default=42)
 
     # Hyperparameter
-    parser.add_argument('--learning_rate', type=float,default=0.01)
+    parser.add_argument('--learning_rate', type=float,default=0.0005)
     parser.add_argument('--freeze', type=bool, default=False)
     # parser.add_argument('--lr_scheduler', default=)
 
@@ -62,7 +62,7 @@ def check_argparse(args):
 
 
 def build_train_val_test_dataset(args):
-    train_dataset = MetalDataset(mode='train', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
+    train_dataset = MetalDataset(mode='train', transform=True,image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
     val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
     test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
 
@@ -84,9 +84,12 @@ def freeze_pretrain(model, freeze=True):
             
 
 
-def build_scheduler(optimizer):
-    scheduler = ReduceLROnPlateau(optimizer, mode = 'min')
-    
+def build_scheduler(optimizer, freeze):
+    # TODO: remember to change to patience 4 while unfreeze
+    if freeze == True:
+        scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=10)
+    else:
+        scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=4)
     return scheduler
 
   
@@ -130,9 +133,8 @@ def main():
     # criterion = WeightFocalLoss()
     criterion = nn.CrossEntropyLoss()
 
-    # optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.learning_rate, nesterov=True, weight_decay=0.01)
     optimizer = optim.Adam(model.parameters())
-    scheduler = build_scheduler(optimizer)
+    scheduler = build_scheduler(optimizer, args.freeze)
             
     print('\n-------- Preparing Model Done! --------\n')
 
@@ -144,11 +146,17 @@ def main():
     for epoch in range(args.epoch):
         start_time = time.time()
 
+        # if epoch >= 6:
+        #     optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.learning_rate, nesterov=True, weight_decay=0.01)
+        #     scheduler = build_scheduler(optimizer)
+        # else:
+        #     pass
+
         train_running_loss = 0.0
         print(f'\n---The {epoch+1}-th epoch---\n')
         print('[Epoch, Batch] : Loss')
 
-        # TRAINING LOOP
+        #  --------------------------- TRAINING LOOP ---------------------------
         print('---Training Loop begins---')
         read_time = time.time()
         
@@ -162,15 +170,10 @@ def main():
                 if i == 1:
                     break
             # --- test section ---
-             
-            # move CUDA device
+
             input, target = data[0].to(device), data[1].to(device)
-
-            
             output = model(input)
-
             loss = criterion(output, target)
-
             loss.backward()
 
             # solving bact_size issue
@@ -180,7 +183,6 @@ def main():
 
             train_running_loss += loss.item()
             writer.add_scalar('Averaged loss', loss.item(), int(8511*0.6/args.batch_size)*epoch + i)
-            
             print(
                 f"[{epoch+1}, {i+1}]: %.3f" % (train_running_loss)
             )
@@ -193,7 +195,7 @@ def main():
         print('---Training Loop ends---')
         print(f'---Training spend time: %.1f sec' % (time.time() - start_time))
         
-        # VALIDATION LOOP
+        #  --------------------------- VALIDATION LOOP ---------------------------
         with torch.no_grad():
             val_run_loss = 0.0
             print('\n---Validaion Loop begins---')
@@ -209,11 +211,10 @@ def main():
                 # --- test section ---
 
                 input, target = data[0].to(device), data[1].to(device)
-
                 output = model(input)
                 # cluster label to target label
-                output = cluster2target(output)
-                loss = criterion(output, target)
+                output_15 = cluster2target(output)
+                loss = criterion(output_15, target)
 
                 _, predicted = torch.max(output, 1)
                 # cluster label to target label

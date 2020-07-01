@@ -1,4 +1,4 @@
-from albumentations.augmentations.transforms import Flip, Normalize, Blur, Resize, RandomCrop
+from albumentations.augmentations.transforms import Flip, Normalize, Resize, RandomCrop, RandomBrightnessContrast, HueSaturationValue, RandomContrast, Cutout
 from albumentations.pytorch.transforms import ToTensorV2
 from albumentations import Compose
 import cv2
@@ -12,8 +12,13 @@ import numpy as np
 def get_transfrom(image, size=512, crop_size=256):
     transform = Compose([ Resize(size,size, interpolation=cv2.INTER_AREA),
                         RandomCrop(crop_size, crop_size),
-                        Normalize(mean =[0.3835, 0.3737, 0.3698], std= [1.0265, 1.0440, 1.0499]), 
+                        Cutout(num_holes=4),
+                        HueSaturationValue(hue_shift_limit=0.2, sat_shift_limit= 0.2, 
+                                     val_shift_limit=0.2),
+                        RandomBrightnessContrast(brightness_limit=0.2, 
+                                           contrast_limit=0.2),
                         Flip(),
+                        Normalize(mean =[0.3835, 0.3737, 0.3698], std= [1.0265, 1.0440, 1.0499]),
                         ToTensorV2()
     ])
     image_transform = transform(image = image)['image']

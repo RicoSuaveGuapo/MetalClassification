@@ -3,21 +3,76 @@
 # Work Log
 
 ## TODO
-1. Adam then SGD+momentum for fine-tuning
-2. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
-3. Mixup, Cutout, RandomBrightnessContrast, HueSaturationValue
+1. Mixup, Cutout, RandomBrightnessContrast, HueSaturationValue
+2. Adam to 80x% then SGD+momentum for fine-tuning
+3. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
 4. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
 5. metric learning
 
 ## 6/30
-fix the loss bug.
-see cluster2target
+#### Test run 3
+* cluster2target fixed
+    *  val loss bug fixed
+
+1. SGD -> Adam, default parameters
+    trial 37
+    :::info
+    epoch 5
+    67.02 %
+    406.9 sec
+    :::
+
+    trial 38
+    :::info
+    epoch 15
+    75 %
+    1897.9 sec
+    at epoch 6, sign of overfitting
+    :::
+
+2. Using freeze and unfreeze method
+    
+    trial 39
+    freeze
+    :::info
+    epoch 15
+    66.27 %
+    1670.6 sec
+    :::
+
+    trial 40
+    unfreeze and ReduceLROnPlateau with patience=4
+    :::info
+    epoch 20
+    81.0 %
+    2508.8 sec
+    sign of overfitting
+    :::
+
+3.  !!!!!!!!!! IMPORTANT !!!!!!!!!!!
+    YOU have not use AUG in train set
+   
+    trial 42
+    freeze
+    :::info
+    epoch 15, lr fixed
+    60 %
+    1770.4 sec
+    :::
+
+    trial 43
+    unfreeze
+    :::info
+    epoch 20
+    82.6 %
+    :::
+
 
 ## 6/29
 #### Find the best number of clusters (V)
 k_numbers = [3,3,2,4,4,4,2,2,3,2,0,4,0,0,0]
 #### Modify dataset.py (V)
-#### Modify train.py 
+#### Modify train.py (V)
 
 #### Test run 1 (trial 28)
 1. 37 subclasses 
@@ -39,25 +94,6 @@ k_numbers = [3,3,2,4,4,4,2,2,3,2,0,4,0,0,0]
     check the label!!
     :::
 
-
-#### Test run 3 (trial 32)
--> cluster2target fixed!
-apply to train.py
-1. SGD -> Adam, default parameters
-    :::info
-
-    :::
-
-2. Using freeze and unfreeze method
-    freeze
-    :::info
-    
-    :::
-
-    unfreeze
-    :::info
-
-    :::
 
 ## 6/24
 #### Create own cluster dataset
