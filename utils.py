@@ -79,7 +79,6 @@ def train_val_test_index(label: list, whichindex: str, val_split: float, test_sp
 
     for i in index_list_uni:
         index = np.where(label == i)
-        np.random.seed(42) # fix the train val test set.
         class_index = np.random.permutation(index[0]).tolist()
         train_index += class_index[:round(len(class_index)*(1-val_split-test_split))]
         val_index += class_index[round(len(class_index)*(1-val_split-test_split)): round(len(class_index)*(1-test_split))]
@@ -176,10 +175,10 @@ def read_df(path):
     return df
 
 if __name__ == '__main__':
-    device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
-    a = torch.tensor([[i for i in range(37)], [i for i in range(37)]]).to(device)
-    target_label = cluster2target(a)
-    print(target_label)
+    # device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+    # a = torch.tensor([[i for i in range(37)], [i for i in range(37)]]).to(device)
+    # target_label = cluster2target(a)
+    # print(target_label)
     
     # newlabel = cluster2sublabel()
     # print(newlabel[-200:])
@@ -205,3 +204,4 @@ if __name__ == '__main__':
 
     #     label += [label_i] * len(image_names)
     #     label_i += 1
+    pass

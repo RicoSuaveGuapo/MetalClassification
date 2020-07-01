@@ -30,25 +30,26 @@ class MetalDataset(Dataset):
             img_names += image_names 
             image_path += [f'{path}/{class_name}/{image_name}' for image_name in image_names]
             label += [i] * len(image_names) # change to new cluster labels
-
+        
         self.mode = mode
         self.transform = transform
         self.image_size = image_size
 
-        np.random.seed(seed)
+        np.random.seed(seed)  # fix the train val test set.
         self.index_list = train_val_test_index(label, mode, val_split, test_spilt)
         self.data_path = [image_path[i] for i in self.index_list]
 
         # cluster label
         if mode == 'train':
             label = torch.load('oneDfea_train_label37')
+            # the file is created with train_val_test_index distribution, no need to use
+            # [label[i] for i in self.index_list]
             label = label.type(torch.LongTensor).tolist()
             self.label = label
+        # normal label
         else:
             self.label = [label[i] for i in self.index_list]
-
         self.image_names = [img_names[i] for i in self.index_list]
-        
             
     def __len__(self):
         return len(self.index_list)
@@ -58,9 +59,7 @@ class MetalDataset(Dataset):
         path_i = self.data_path[idx]
         image = cv2.imread(path_i, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
         image_name = self.image_names[idx]
-        
         if self.transform:
             image = get_transfrom(image, crop_size=self.image_size) # tensor
         else:
@@ -70,18 +69,11 @@ class MetalDataset(Dataset):
         
 
 if __name__ == '__main__':
-    dataset = MetalDataset(mode='val', transform=True, cluster_img=False)
-    dataloader = DataLoader(dataset, batch_size=10, shuffle=True)
+    dataset = MetalDataset(mode='train', transform=True, cluster_img=False)
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     start_time = time.time()
     for image, label, image_name in dataloader:
         print(f'---One batch spends time: %.1f sec' % (time.time() - start_time))
         print(image.shape)
         print(label)
         break
-
-    # a = [0]*5 + [1]*4
-    # a = np.array(a)
-    # a_uni = np.unique(a)
-    # train_index = []
-    # val_index = []
-    # test_index = []    

@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 import torch.optim as optim
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, StepLR
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.utils import make_grid
@@ -25,44 +25,40 @@ def build_argparse():
     parser.add_argument('--image_size', default = 256, type=int)
     parser.add_argument('--val_split', type=float, default=0.3)
     parser.add_argument('--test_split', type=float, default=0.1)
+    parser.add_argument('--optim', type=str, default='Adam')
     
     # FC and Albumentation
     parser.add_argument('--activation', type=str, default='relu')
     parser.add_argument('--hidden_dim', type=int, default=256)
     parser.add_argument('--seed', type=int, default=42)
 
-    # Hyperparameter
-    parser.add_argument('--learning_rate', type=float,default=0.0005)
+    # Additional Hyperparameter
+    parser.add_argument('--lr', type=float,default=0.0001)
+    parser.add_argument('--lr_name', type=str, default='ReduceLROnPlateau')
     parser.add_argument('--freeze', type=bool, default=False)
-    # parser.add_argument('--lr_scheduler', default=)
 
     # Loop control
     parser.add_argument('--epoch', type=int, default = 1)
     parser.add_argument('--batch_size', type=int, default=16)
 
     # Additional    
-    parser.add_argument('--test_section', type=bool, default=False)
-    parser.add_argument('--load_model_para', help='Enter the model.pth file name', default=False)
-    parser.add_argument('--cluster_img', type=bool, default=False)
+    parser.add_argument('--load_model_para', help='Enter the model.pth file name', type=str, default=None)
+    parser.add_argument('--cluster_img', type=bool, default=True)
 
     return parser
 
-
-
 def check_argparse(args):
     assert args.model_name in [
-                                'resnet18', 'resnet152', # out_channels = 64
-                                'densenet121', 'densenet161', # out_channels = 64
+                                'resnet18', 'resnet152', 
+                                'densenet121', 'densenet161', 
                                 'se_resnet50', 'se_resnet152',
                                 'se_resnext50_32x4d', 'se_resnext101_32x4d',
-                                'efficientnet-b0', # out_channels = 32
-                                'efficientnet-b7' # out_channels = 64
+                                'efficientnet-b0', 
+                                'efficientnet-b7' 
                                 ]
 
-
-
 def build_train_val_test_dataset(args):
-    train_dataset = MetalDataset(mode='train', transform=True,image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
+    train_dataset = MetalDataset(mode='train', transform=True, image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
     val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
     test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
 
@@ -81,20 +77,20 @@ def freeze_pretrain(model, freeze=True):
         for name, par in model.named_parameters():
             if name.startswith('cnn_model'):
                 par.requires_grad = True
-            
 
+def build_scheduler(optimizer, name, freeze):
+    if name == 'ReduceLROnPlateau':
+        if freeze == True:
+            scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=6)
+        else:
+            scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=3)
+        
+    elif name == 'StepLR':
+        scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
 
-def build_scheduler(optimizer, freeze):
-    # TODO: remember to change to patience 4 while unfreeze
-    if freeze == True:
-        scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=10)
-    else:
-        scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=4)
     return scheduler
-
   
 def main():
-    # device
     device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
 
     # args
@@ -104,23 +100,20 @@ def main():
 
     # data
     print('\n-------- Data Preparing --------\n')
-
     train_dataloader, val_dataloader, test_dataloader = build_train_val_test_dataset(args)
-
     print('\n-------- Data Preparing Done! --------\n')
 
-
-    print('\n-------- Preparing Model --------\n')
     # model
+    print('\n-------- Preparing Model --------\n')
     model = MetalModel(model_name = args.model_name, hidden_dim=args.hidden_dim, activation=args.activation, cluster_img=args.cluster_img)
-
-    # pretrained model freeze
+    # freeze CNN pretrained model
     if args.freeze:
         freeze_pretrain(model, True)
     else:
         freeze_pretrain(model, False)
 
-    # loading previous model parameters or not
+    # loading previous trained model parameters
+    # usually for freeze-unfreeze method
     if args.load_model_para:
         model.load_state_dict(torch.load('/home/rico-li/Job/Metal/model_save/'+args.load_model_para))
     else:
@@ -130,27 +123,28 @@ def main():
     model = model.to(device)
     
     # TODO: need to discuss
-    # criterion = WeightFocalLoss()
+    # WeightFocalLoss() for imbalanced dataset (while considering the minor classes are important)
+    # rangeloss, for inter-class and intra-class seperation
     criterion = nn.CrossEntropyLoss()
 
-    optimizer = optim.Adam(model.parameters())
-    scheduler = build_scheduler(optimizer, args.freeze)
-            
+    if args.optim == 'Adam':
+        # before acc 80 %
+        optimizer = optim.Adam(model.parameters())
+    elif args.optim == 'SGD':
+        # after acc 80 %
+        optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.lr, nesterov=True, weight_decay=0.01)
+
+    scheduler = build_scheduler(optimizer, args.lr_name, args.freeze)
+
     print('\n-------- Preparing Model Done! --------\n')
 
     # train
     print('\n-------- Starting Training --------\n')
-    # prepare the tensorboard
+    # tensorboard
     writer = SummaryWriter(f'runs/trial_{args.exp}')
 
     for epoch in range(args.epoch):
         start_time = time.time()
-
-        # if epoch >= 6:
-        #     optimizer = optim.SGD(model.parameters(), momentum=0.9, lr=args.learning_rate, nesterov=True, weight_decay=0.01)
-        #     scheduler = build_scheduler(optimizer)
-        # else:
-        #     pass
 
         train_running_loss = 0.0
         print(f'\n---The {epoch+1}-th epoch---\n')
@@ -158,35 +152,21 @@ def main():
 
         #  --------------------------- TRAINING LOOP ---------------------------
         print('---Training Loop begins---')
-        read_time = time.time()
-        
-        # solving bact_size issue
-        optimizer.zero_grad()
+        optimizer.zero_grad() # using gradient accumulated method to solve batch_size too small issue
 
         for i, data in enumerate(train_dataloader, start=0):
-            
-            # --- test section---
-            if args.test_section:
-                if i == 1:
-                    break
-            # --- test section ---
-
             input, target = data[0].to(device), data[1].to(device)
             output = model(input)
             loss = criterion(output, target)
             loss.backward()
-
-            # solving bact_size issue
-            if (i+1)%args.batch_size == 0:
+            train_running_loss += loss.item()
+            if (i+1)%args.batch_size == 0:  # using gradient accumulated method to solve batch_size too small issue
+                                            # real batch size is 16 * 16 = 256
+                writer.add_scalar('Batch-Averaged loss', train_running_loss/(args.batch_size), args.batch_size*epoch + int((i+1)/(args.batch_size)))
+                print( f"[{epoch+1}, {int((i+1)/(args.batch_size))}]: %.3f" % (train_running_loss/(args.batch_size)) )
                 optimizer.step()
                 optimizer.zero_grad()
-
-            train_running_loss += loss.item()
-            writer.add_scalar('Averaged loss', loss.item(), int(8511*0.6/args.batch_size)*epoch + i)
-            print(
-                f"[{epoch+1}, {i+1}]: %.3f" % (train_running_loss)
-            )
-            train_running_loss = 0.0
+                train_running_loss = 0.0
         
         lr = [group['lr'] for group in optimizer.param_groups]
         print('Epoch:', epoch+1,'LR:', lr[0])
@@ -199,37 +179,33 @@ def main():
         with torch.no_grad():
             val_run_loss = 0.0
             print('\n---Validaion Loop begins---')
+            start_time = time.time()
             batch_count = 0
             total_count = 0
             correct_count = 0
             for i, data in enumerate(val_dataloader, start=0):
-
-                # --- test section---
-                if args.test_section:
-                    if i == 1:
-                        break
-                # --- test section ---
-
                 input, target = data[0].to(device), data[1].to(device)
-                output = model(input)
+                output = model(input) # (37)
+                _, predicted = torch.max(output, 1) # (37)
+
                 # cluster label to target label
-                output_15 = cluster2target(output)
+                output_15 = cluster2target(output) # (15)
                 loss = criterion(output_15, target)
-
-                _, predicted = torch.max(output, 1)
-                # cluster label to target label
-                predicted = cluster2target(predicted)
-
                 val_run_loss += loss.item()
+                
+                # cluster label to target label
+                predicted = cluster2target(predicted) # (15)
+                correct_count += (predicted == target).sum().item()
+
                 batch_count += 1
                 total_count += target.size(0)
-                
-                correct_count += (predicted == target).sum().item()
-            
             accuracy = (100 * correct_count/total_count)
             val_run_loss = val_run_loss/batch_count
             
-            scheduler.step(val_run_loss)
+            if args.lr_name == 'ReduceLROnPlateau':
+                scheduler.step(val_run_loss)
+            elif args.lr_name == 'StepLR':
+                scheduler.step()
 
             writer.add_scalar('Validation accuracy', accuracy, epoch)
             writer.add_scalar('Validation loss', val_run_loss, epoch)
@@ -238,16 +214,14 @@ def main():
             print(f"Accuracy is %.2f %% \n" % (accuracy))
                 
             print('---Validaion Loop ends---')
+            print(f'---Validaion spend time: %.1f sec' % (time.time() - start_time))
     writer.close()
     print('\n-------- End Training --------\n')
     
-
     print('\n-------- Saving Model --------\n')
-
     savepath = f'/home/rico-li/Job/Metal/model_save/{str(args.exp)}_{str(args.model_name)}.pth'
     torch.save(model.state_dict(), savepath)
-        
-    print('\n-------- Saved --------\n')
+    print('-------- Saved --------')
     print(f'\n== Trial {args.exp} finished ==\n')
 
 

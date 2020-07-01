@@ -1,36 +1,106 @@
-# Metal_Classification
-
 # Work Log
+## TODO:
+1. change to move complex models
+2. Ensemble
+2. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
+3. metric learning
+4. self labeling
+5. Self-supervise learning
+6. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
 
-## TODO
-1. Mixup, Cutout, RandomBrightnessContrast, HueSaturationValue
-2. Adam to 80x% then SGD+momentum for fine-tuning
-3. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
-4. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
-5. metric learning
+# TODO: IMPORTANT TODO:
+* check loss and label!!
+* check augmentation !!
+* check the confusion matrix of 37 subclasses
+
+## 7/1
+### Test run 2
+1. Use se_resnext101_32x4d model
+    trial 45
+    :::info
+    epoch 1
+    59.42 %
+    690.6 sec
+    :::
+
+2. Using freeze-unfreeze
+    trial 46
+    freeze
+    :::info
+    epoch 10
+    60.09 %
+    1182.7 sec
+    epoch 7 of val loss shows the sign of overfitting
+    :::
+
+    trial 47
+    unfreeze
+    :::info
+    epoch 15
+    84.57 %
+    1968.7 sec
+    while lr 0.0001 performance increase
+    :::
+
+    trial 48
+    unfreeze and re-train trial 47 with small lr
+    and using SGD optim
+    :::info
+    epoch 5
+    85.43 ~ 86 %
+    659.4 sec
+    :::
+
+    trial 49
+    unfreeze and re-train trial 47 with small lr (StepLR, step_size=2, gamma=0.1) and using SGD optim
+    :::info
+    epoch 5
+    85.15 % 
+    651.5 sec
+    :::
+
+#### Test run 1
+1. use the SGD+momentum re-run trial 43
+    trial 43
+    :::info
+    epoch 5
+    82.8 %
+    635.6 sec
+    the overfitting sign gone
+    :::
+2. use the SGD+momentum re-run trial 43
+    trial 44
+    :::info
+    epoch 10
+    81.32 %
+    no improvement
+    :::
 
 ## 6/30
 #### Test run 3
-* cluster2target fixed
-    *  val loss bug fixed
-
-1. SGD -> Adam, default parameters
-    trial 37
+!!!!!!!!!! IMPORTANT !!!!!!!!!!!
+YOU have not use AUG in train set (V)
+    
+    trial 42
+    freeze
     :::info
-    epoch 5
-    67.02 %
-    406.9 sec
+    epoch 15, lr fixed
+    60 %
+    1770.4 sec
     :::
 
-    trial 38
+    trial 43 (file get washed @@)
+    unfreeze
     :::info
-    epoch 15
-    75 %
-    1897.9 sec
-    at epoch 6, sign of overfitting
+    epoch 20
+    82.6 %
+    sign of overfitting around epoch 13
     :::
 
-2. Using freeze and unfreeze method
+
+
+#### Test run 2.
+Using freeze-unfreeze method
     
     trial 39
     freeze
@@ -49,24 +119,25 @@
     sign of overfitting
     :::
 
-3.  !!!!!!!!!! IMPORTANT !!!!!!!!!!!
-    YOU have not use AUG in train set
-   
-    trial 42
-    freeze
+#### Test run 1
+* cluster2target fixed
+    *  val loss bug fixed
+
+SGD -> Adam, default parameters
+    trial 37
     :::info
-    epoch 15, lr fixed
-    60 %
-    1770.4 sec
+    epoch 5
+    67.02 %
+    406.9 sec
     :::
 
-    trial 43
-    unfreeze
+    trial 38
     :::info
-    epoch 20
-    82.6 %
+    epoch 15
+    75 %
+    1897.9 sec
+    at epoch 6, sign of overfitting
     :::
-
 
 ## 6/29
 #### Find the best number of clusters (V)

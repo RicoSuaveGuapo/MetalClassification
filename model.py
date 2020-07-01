@@ -12,7 +12,7 @@ from utils import Mish
 
 
 class MetalModel(nn.Module):
-    def __init__(self, model_name, hidden_dim, dropout=0.5, activation='relu', cluster_img = False):
+    def __init__(self, model_name, hidden_dim, dropout=0.5, activation='relu', cluster_img = True):
         super().__init__()
 
         if activation.lower() == 'relu':
@@ -33,7 +33,7 @@ class MetalModel(nn.Module):
         
         self.linear1 = nn.Linear(dim_feats, hidden_dim)
 
-        output_classes = 37 #15 if not cluster_img else 66 # for cluster labels
+        output_classes = 15 if not cluster_img else 37 # for cluster labels
         self.linear2 = nn.Linear(hidden_dim, output_classes)
         
         self.dropout = nn.Dropout(p=dropout) if dropout else None
