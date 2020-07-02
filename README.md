@@ -13,6 +13,10 @@
 * check augmentation !!
 * check the confusion matrix of 37 subclasses
 
+## 7/2
+* auto-encoder + anomaly detection
+* direct image PCA, seperate minor classes.
+
 ## 7/1
 ### Test run 2
 1. Use se_resnext101_32x4d model
