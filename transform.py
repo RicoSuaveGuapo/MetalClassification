@@ -39,10 +39,10 @@ def test_transfrom(image, size=256): # note that test image size is same as crop
 
 
 if __name__ == '__main__':
-    img = cv2.imread("Image/GB/GB_Q0685-1090323111531669.jpg", cv2.IMREAD_COLOR)
+    img = cv2.imread("Image/GB/GB_Q0685-1090323104230594.jpg", cv2.IMREAD_COLOR)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-    img_trans = get_transfrom(img)
+    img_trans = test_transfrom(img)
     print(img_trans.shape)
     img_trans = img_trans.numpy().transpose(1,2,0)
     

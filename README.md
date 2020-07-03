@@ -1,24 +1,27 @@
 # Work Log
 ## TODO:
-1. change to move complex models
-2. Ensemble
+1. auto-encoder + anomaly detection
+1. Ensemble
 2. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
 3. metric learning
 4. self labeling
 5. Self-supervise learning
 6. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
 
-# TODO: IMPORTANT TODO:
-* check loss and label!!
-* check augmentation !!
-* check the confusion matrix of 37 subclasses
-
-## 7/2
-* auto-encoder + anomaly detection
+## Ideas
 * direct image PCA, seperate minor classes.
 
+## 7/2
+label 13 class is the worst in trial 47
+try to add cluster method to label13 
+-> guess not, cluster seperation is very bad.
+
+#### Test run 1
+auto-encoder + anomaly detection
+
+
 ## 7/1
-### Test run 2
+#### Test run 2
 1. Use se_resnext101_32x4d model
     trial 45
     :::info

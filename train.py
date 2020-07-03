@@ -63,8 +63,8 @@ def build_train_val_test_dataset(args):
     test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
 
     train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(),batch_size=args.batch_size, shuffle=True)
-    val_dataloader   = DataLoader(val_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=True)
-    test_dataloader   = DataLoader(test_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=args.batch_size, shuffle=True)
+    val_dataloader   = DataLoader(val_dataset, pin_memory=True, num_workers=2*os.cpu_count(), batch_size=args.batch_size, shuffle=True)
+    test_dataloader   = DataLoader(test_dataset, pin_memory=True, num_workers=2*os.cpu_count(), batch_size=args.batch_size, shuffle=True)
 
     return train_dataloader, val_dataloader, test_dataloader
 

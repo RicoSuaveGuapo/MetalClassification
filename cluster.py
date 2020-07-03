@@ -92,7 +92,7 @@ def kmean(fea_path, label_path, fea_name_path, num_clusters, mode, metal_train=F
         print(f'\n-- class {i} is done --\n')
     
     if save:
-        torch.save(newlabel, f'oneDfea_newlab_{mode}_metal_train_{metal_train}')
+        torch.save(newlabel, f'oneDfea_newlab_{mode}_metal_train_{metal_train}_13changed')
     else:
         pass
     
@@ -205,7 +205,7 @@ def visual_kmean_pca(fea_path, old_label_path, new_label_path=None, name_path=No
     plt.scatter(pca_one, pca_two, c=label, cmap=matplotlib.colors.ListedColormap(colors))
     if not all:
         for i, txt in enumerate(feaName):
-            if i%10 == 9:
+            if i%15 == 14:
                 plt.annotate(txt, (pca_one[i]-100, pca_two[i]))
     else:
         pass
@@ -220,11 +220,14 @@ if __name__ == '__main__':
         
         # --- kmean ---
         start_time = time.time()
-        k_num_list = [3,3,2,4,4,4,2,2,3,2,0,4,0,0,0]
-        newlabel = kmean('oneDfea_train_metal_trained_False','oneDfea_lab_train_metal_trained_False',
-                        'oneDfea_name_train_metal_trained_False.txt', k_num_list, mode='train')
-        print(newlabel.shape)
-        print(f'time: %.2f' % (time.time() - start_time))
+        # TODO: Using new k_num_list, changing label 13 with 2 subclass
+        # k_num_list = [3,3,2,4,4,4,2,2,3,2,0,4,0,0,0]
+        # k_num_list = [3,3,2,4,4,4,2,2,3,2,0,4,0,2,0]
+
+        # newlabel = kmean('oneDfea_train_metal_trained_False','oneDfea_lab_train_metal_trained_False',
+        #                 'oneDfea_name_train_metal_trained_False.txt', k_num_list, mode='train')
+        # print(newlabel.shape)
+        # print(f'time: %.2f' % (time.time() - start_time))
         
         # cluster
         # start_time = time.time()
@@ -236,8 +239,8 @@ if __name__ == '__main__':
 
         # PCA
         visual_kmean_pca('oneDfea_train_metal_trained_False', 'oneDfea_lab_train_metal_trained_False', 
-                          'oneDfea_newlab_train_metal_train_False', 'oneDfea_name_train_metal_trained_False.txt', 
-                          n_components=2, label_i=6)
+                          'oneDfea_newlab_train_metal_train_False_13changed', 'oneDfea_name_train_metal_trained_False.txt', 
+                          n_components=2, label_i=9)
 
         # --- nake eyes verify
         # nakeEyesCheck('oneDfea_newlab_train', 'oneDfea_name_train.txt', 0)
