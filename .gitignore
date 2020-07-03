@@ -14,3 +14,7 @@ oneDfea_train
 oneDfea_train_label37
 oneDfea_train_metal_trained_False
 Long-tail-classification/1904.05160.pdf
+data/
+dc_img/
+vae_img/
+oneDfea_newlab_train_metal_train_False_13changed
