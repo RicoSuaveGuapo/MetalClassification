@@ -17,7 +17,7 @@ class MetalDataset(Dataset):
         assert mode in ['train', 'test', 'val']
         super().__init__()
 
-        assert os.getcwd() in ['/home/rico-li/Job/Metal', '/home/aiuser/Job/MetalClassification/'], 'in the wrong working directory'
+        assert os.getcwd() in ['/home/rico-li/Job/Metal', '/home/aiuser/Job/MetalClassification'], 'in the wrong working directory'
         if os.getcwd() == '/home/rico-li/Job/Metal':
             print('In local machine.')
         else:
