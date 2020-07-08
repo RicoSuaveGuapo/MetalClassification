@@ -17,7 +17,12 @@ class MetalDataset(Dataset):
         assert mode in ['train', 'test', 'val']
         super().__init__()
 
-        assert os.getcwd() == '/home/rico-li/Job/Metal', 'in the wrong working directory'
+        assert os.getcwd() in ['/home/rico-li/Job/Metal', '/home/aiuser/Job/MetalClassification/'], 'in the wrong working directory'
+        if os.getcwd() == '/home/rico-li/Job/Metal':
+            print('In local machine.')
+        else:
+            print('In server.')
+
         path = os.getcwd()+'/Image'
         class_names = os.listdir(path)
         class_names.sort()
@@ -193,15 +198,15 @@ if __name__ == '__main__':
     
     train_dataset = MetalDataset(mode='test', transform=True, cluster_img=False, image_size=256, val_split=0.3, test_spilt=0.1, seed=42)
     train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=16, shuffle=True)
-    # labels = torch.Tensor().type(torch.long)
-    # for i, (image, label, image_name) in enumerate(train_dataloader):
-    #     labels = torch.cat((labels, label))
-    #     print(label)
-    #     print(f"{i}-batch")
+    labels = torch.Tensor().type(torch.long)
+    for i, (image, label, image_name) in enumerate(train_dataloader):
+        labels = torch.cat((labels, label))
+        print(label)
+        print(f"{i}-batch")
 
-    # labels = labels.numpy()
-    # plt.hist(labels, bins=100, alpha=0.75)
-    # plt.show()
+    labels = labels.numpy()
+    plt.hist(labels, bins=100, alpha=0.75)
+    plt.show()
 
 
 

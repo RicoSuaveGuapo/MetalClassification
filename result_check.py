@@ -65,8 +65,13 @@ if __name__ == '__main__':
 
     local_path = '/home/rico-li/Job/Metal/model_save/69_se_resnext101_32x4d.pth'
     server_path = '/home/aiuser/Job/MetalClassification/mode_save/69_se_resnext101_32x4d.pth'
+    
+    if os.getcwd() == '/home/rico-li/Job/Metal':
+        path = local_path
+    else:
+        path = server_path
 
-    c_matrix = confusionMatrix(model_path=, 
+    c_matrix = confusionMatrix(model_path=path, 
                     model_name='se_resnext101_32x4d', mode=mode, 
                     cluster_img = cluster_img, output_class=output_class, 
                     plotclass=plotclass, merge=merge, cluster_img_val=cluster_img_val)
