@@ -41,15 +41,6 @@ re-tain trial 64 (73.56 %) with fine-tuning
     73.87 %
     :::
 
-    trial 69
-    freeze
-    :::info
-    epoch 6
-    --lr_name 'StepLR' --optim SGD
-    73.29 %
-    701.7 sec
-    :::
-
 #### Test run 1
 re-train trial 65 (88.84 %) with fine-tuning
     trial 66 
