@@ -21,7 +21,7 @@ def build_argparse():
     parser = argparse.ArgumentParser()
     # Basic
     parser.add_argument('--exp', help='The index of this experiment', type=int, default=1)
-    parser.add_argument('--model_name', default='se_resnet152')
+    parser.add_argument('--model_name', default='se_resnext101_32x4d')
     parser.add_argument('--image_size', default = 256, type=int)
     parser.add_argument('--val_split', type=float, default=0.3)
     parser.add_argument('--test_split', type=float, default=0.1)
@@ -36,6 +36,7 @@ def build_argparse():
     parser.add_argument('--lr', type=float,default=0.0001)
     parser.add_argument('--lr_name', type=str, default='ReduceLROnPlateau')
     parser.add_argument('--freeze', type=bool, default=False)
+    parser.add_argument('--output_class', type=int, default=15)
 
     # Loop control
     parser.add_argument('--epoch', type=int, default = 1)
@@ -58,9 +59,13 @@ def check_argparse(args):
                                 ]
 
 def build_train_val_test_dataset(args):
-    train_dataset = MetalDataset(mode='train', transform=True, image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
-    val_dataset   = MetalDataset(mode='val', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
-    test_dataset  = MetalDataset(mode='test', image_size=args.image_size, val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
+    train_dataset = MetalDataset(mode='train', cluster_img=args.cluster_img, transform=True, 
+                                image_size=args.image_size, val_split=args.val_split, 
+                                test_spilt=args.test_split, seed=args.seed)
+    val_dataset   = MetalDataset(mode='val', cluster_img=False, image_size=args.image_size, 
+                                val_split=args.val_split,test_spilt=args.test_split, seed=args.seed)
+    test_dataset  = MetalDataset(mode='test', cluster_img=False, image_size=args.image_size, 
+                                val_split=args.val_split, test_spilt=args.test_split, seed=args.seed)
 
     train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(),batch_size=args.batch_size, shuffle=True)
     val_dataloader   = DataLoader(val_dataset, pin_memory=True, num_workers=2*os.cpu_count(), batch_size=args.batch_size, shuffle=True)
@@ -83,10 +88,10 @@ def build_scheduler(optimizer, name, freeze):
         if freeze == True:
             scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=6)
         else:
-            scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=3)
+            scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=2)
         
     elif name == 'StepLR':
-        scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
+        scheduler = StepLR(optimizer, step_size=2, gamma=0.5)
 
     return scheduler
   
@@ -105,7 +110,8 @@ def main():
 
     # model
     print('\n-------- Preparing Model --------\n')
-    model = MetalModel(model_name = args.model_name, hidden_dim=args.hidden_dim, activation=args.activation, cluster_img=args.cluster_img)
+    model = MetalModel(model_name = args.model_name, hidden_dim=args.hidden_dim, 
+                        activation=args.activation, output_class=args.output_class)
     # freeze CNN pretrained model
     if args.freeze:
         freeze_pretrain(model, True)
@@ -153,7 +159,7 @@ def main():
         #  --------------------------- TRAINING LOOP ---------------------------
         print('---Training Loop begins---')
         optimizer.zero_grad() # using gradient accumulated method to solve batch_size too small issue
-
+        model.train()
         for i, data in enumerate(train_dataloader, start=0):
             input, target = data[0].to(device), data[1].to(device)
             output = model(input)
@@ -169,7 +175,7 @@ def main():
                 train_running_loss = 0.0
         
         lr = [group['lr'] for group in optimizer.param_groups]
-        print('Epoch:', epoch+1,'LR:', lr[0])
+        print('Epoch:', f'{epoch+1}/{args.epoch}',' LR:', lr[0])
         writer.add_scalar('Learning Rate', lr[0], epoch)
 
         print('---Training Loop ends---')
@@ -177,6 +183,7 @@ def main():
         
         #  --------------------------- VALIDATION LOOP ---------------------------
         with torch.no_grad():
+            model.eval()
             val_run_loss = 0.0
             print('\n---Validaion Loop begins---')
             start_time = time.time()
@@ -185,17 +192,26 @@ def main():
             correct_count = 0
             for i, data in enumerate(val_dataloader, start=0):
                 input, target = data[0].to(device), data[1].to(device)
-                output = model(input) # (37)
-                _, predicted = torch.max(output, 1) # (37)
+                # TODO: only for combine 13 and 11 case
+                target[target == 13] = 11
+                target[target == 14] = 13
 
-                # cluster label to target label
-                output_15 = cluster2target(output) # (15)
-                loss = criterion(output_15, target)
-                val_run_loss += loss.item()
-                
-                # cluster label to target label
-                predicted = cluster2target(predicted) # (15)
-                correct_count += (predicted == target).sum().item()
+                output = model(input)
+                _, predicted = torch.max(output, 1)
+
+                if args.cluster_img:
+                    # cluster label to target label
+                    output_cluster = cluster2target(output)
+                    loss = criterion(output_cluster, target)
+                    val_run_loss += loss.item()
+                    
+                    # cluster label to target label
+                    predicted = cluster2target(predicted)
+                    correct_count += (predicted == target).sum().item()
+                else:
+                    loss = criterion(output, target)
+                    val_run_loss += loss.item()
+                    correct_count += (predicted == target).sum().item()
 
                 batch_count += 1
                 total_count += target.size(0)
@@ -237,6 +253,6 @@ if __name__ == '__main__':
 # time python yourprogram.py
 
 # Freeze
-# python train.py --exp 25 --epoch 10 --freeze True
+# python train.py --exp X --epoch 10 --freeze True --output_class 36
 # Unfreeze and load .pth
-# python train.py --exp 19 --epoch 15 --model_name 'se_resnet152' --batch_size 16 --load_model_para 18_se_resnet152.pth --learning_rate 0.005
+# python train.py --exp X --epoch 15  --load_model_para 65_se_resnext101_32x4d.pth --output_class 36

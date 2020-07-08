@@ -9,10 +9,30 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.datasets import ImageFolder
 
-def cluster2sublabel():
-    clulabel = torch.load('oneDfea_newlab_train_metal_train_False')
+def cluster2sublabel(path_name):
+    clulabel = torch.load(path_name)
     clulabel = clulabel.type(torch.LongTensor)
-    # k_numbers = [3,3,2,4,4,4,2,2,3,2,0+1,4,0+1,0+1,0+1]
+    #              [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]
+    # k_num_list = [3,3,2,4,4,4,2,2,3,2, 0, 4, 0, 0, 0]
+    # sublabel_dict = {0:0, 1:1, 2:2, 
+    #             10:3, 11:4, 12:5,
+    #             20:6, 21:7,
+    #             30:8, 31:9, 32:10, 33:11,
+    #             40:12, 41:13, 42:14, 43:15,
+    #             50:16, 51:17, 52:18, 53:19,
+    #             60:20, 61:21,
+    #             70:22, 71:23,
+    #             80:24, 81:25, 82:26,
+    #             90:27, 91:28,
+    #             100:29,
+    #             110:30, 111:31, 112:32, 113:33, 
+    #             120:34,
+    #             130:35,
+    #             140:36}
+
+    # TODO: new cluster label
+    #                [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
+    # k_num_list   = [3,3,2,4,4,4,2,2,3,2, 0, 4, 0, 0]
     sublabel_dict = {0:0, 1:1, 2:2, 
                 10:3, 11:4, 12:5,
                 20:6, 21:7,
@@ -24,15 +44,15 @@ def cluster2sublabel():
                 80:24, 81:25, 82:26,
                 90:27, 91:28,
                 100:29,
-                110:30, 111:31, 112:32, 113:33, 
+                110:30, 111:31, 112:32, 113:33,
                 120:34,
-                130:35,
-                140:36}
+                130:35}
+    
 
     label = [sublabel_dict[i.item()] for i in clulabel]
     label = torch.tensor(label)
     
-    torch.save(label, f'oneDfea_train_label37')
+    torch.save(label, f'oneDfea_train_label36')
 
     return label
 
@@ -40,6 +60,8 @@ def cluster2sublabel():
 def cluster2target(predicted:torch.tensor)->torch.tensor:
     device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
     k_numbers = [3,3,2,4,4,4,2,2,3,2,1,4,1,1,1]
+    # TODO: new cluster label
+    # k_numbers = [3,3,2,4,4,4,2,2,3,2,1,4,1,1]
     k_cumsum = np.cumsum(k_numbers)
 
     if len(predicted.shape) == 1:
@@ -175,12 +197,13 @@ def read_df(path):
     return df
 
 if __name__ == '__main__':
-    # device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
-    # a = torch.tensor([[i for i in range(37)], [i for i in range(37)]]).to(device)
-    # target_label = cluster2target(a)
-    # print(target_label)
+    device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
+    a = torch.tensor([[1./36]*36, [1./36]*36]).to(device)
+    # print(a)
+    target_label = cluster2target(a)
+    print(target_label)
     
-    # newlabel = cluster2sublabel()
+    # newlabel = cluster2sublabel('oneDfea_newlab_1113merge')
     # print(newlabel[-200:])
 
     # img = np.random.randn(3, 256, 256)
@@ -204,4 +227,3 @@ if __name__ == '__main__':
 
     #     label += [label_i] * len(image_names)
     #     label_i += 1
-    pass

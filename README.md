@@ -1,15 +1,160 @@
 # Work Log
 ## TODO:
 1. auto-encoder + anomaly detection
-1. Ensemble
-2. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
-3. metric learning
-4. self labeling
-5. Self-supervise learning
-6. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
+2. Ensemble
+3. Use domain knowledage
+4. [Long tail classification](http://bangqu.com/2gQa9r.html?fbclid=IwAR3HqmMLyVOeEz0fq3hWVZFtjUEw9AWRIBpZgZy35a8ruappRb4gP4wihfc)
+5. metric learning
+6. self labeling
+7. [Self-supervise learning](https://blog.voidful.tech/paper%20reading/2020/06/28/paper-notes-simclr/?fbclid=IwAR3JN75zoG74O1J-1x2lo4rKrTbF7G0Obsvfb5zp-72J33RG1_2dzytPyZI)
+8. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
+
 
 ## Ideas
 * direct image PCA, seperate minor classes.
+* trian the A model with 13 classes (w/o 11 & 13)
+* then trian the B model with only 11 and 13.
+
+
+## IMPORANT UPDATED (7/8)
+add in `model.train()` and `model.eval()` in the train.py
+## 7/8
+#### Test run 3
+use trial 68 as freeze
+    
+    trial 69
+    unfreeze
+    :::info
+    epoch 20
+    91.34 %
+    2621.9 sec
+    :::
+
+#### Test run 2
+re-tain trial 64 (73.56 %) with fine-tuning
+
+    trial 68
+    freeze
+    :::info
+    epoch 6
+    --lr_name 'StepLR' --optim Adam
+    73.87 %
+    :::
+
+    trial 69
+    freeze
+    :::info
+    epoch 6
+    --lr_name 'StepLR' --optim SGD
+    73.29 %
+    701.7 sec
+    :::
+
+#### Test run 1
+re-train trial 65 (88.84 %) with fine-tuning
+    trial 66 
+    :::info
+    epoch 6
+    --lr_name 'StepLR' --optim SGD
+    89.15 %
+    787.5 sec
+    :::
+
+    trial 67
+    :::info
+    epoch 6
+    --lr_name 'StepLR' --optim Adam
+    89.89 %
+    790.0 sec
+    :::
+
+## 7/7
+#### Test run 2
+* using the cluster label
+* file `oneDfea_combine_True` is class 11 and 13 merge feature maps
+* file `oneDfea_lab_combine_True.txt` is corresponded image names
+* file `oneDfea_newlab_1113merge` is class 11 and 13 merge cluster new labels
+* file `oneDfea_imgname_1113merge.txt` is corresponded image names
+* file `oneDfea_train_label36` is the continuous labels
+    
+    trial 64
+    freeze
+    :::info
+    epoch 10
+    73.56 % 1189.4 sec
+    :::
+
+    trial 65
+    unfreeze
+    :::info
+    epoch 15
+    88.84 %
+    1949.2 sec
+    :::
+
+#### Test run 1
+* train freeze model (trial 56) more
+
+    trial 59
+    freeze
+    :::info
+    epoch 5
+    76.18 %
+    overfiting at the last epoch
+    :::
+
+    trial 60 
+    freeze
+    :::info
+    StepLR
+    epoch 5
+    76.18 %
+    :::
+train more have minor enhance
+
+#### trial 58 check
+cluster image will improve the performace
+
+## 7/6
+* It is not an good idea using fc in the middle of auto-encoder (auto_encoder_trial_15)
+* Changing the feature number in default auto-encoder model (trial 16 5 epochs)
+    * check the loss threshold of class 10 (cannot get with this model)
+* Refine model: add batch normalization (trial 17)
+* TODO: Postone for now
+
+#### Test run 1
+* let class 11 and 13 to be the same class.
+    * use class label with range (0~13), original 11 & 13 merge to class 11.
+    * class 14 change to class 13
+* Discard cluster class
+    * model output change
+    * dataset label change
+    * train.py val loop change
+
+    trial 56
+    freeze
+    :::info
+    epoch 10
+    75.01 %
+    1177.3 sec
+    :::
+
+    trial 57
+    unfreeze
+    :::info
+    epoch 15
+    89.31 %
+    1939.0 sec
+    :::
+
+    trial 58
+    re-train trial 57
+    :::info
+    StepLR, SGD
+    5 epoch
+    89.54 %
+    :::
+
 
 ## 7/2
 label 13 class is the worst in trial 47
@@ -17,7 +162,8 @@ try to add cluster method to label13
 -> guess not, cluster seperation is very bad.
 
 #### Test run 1
-auto-encoder + anomaly detection
+auto-encoder
+1. Default auto-encoder model (v)
 
 
 ## 7/1
@@ -35,7 +181,7 @@ auto-encoder + anomaly detection
     freeze
     :::info
     epoch 10
-    60.09 %
+    69.68 %
     1182.7 sec
     epoch 7 of val loss shows the sign of overfitting
     :::
@@ -44,7 +190,7 @@ auto-encoder + anomaly detection
     unfreeze
     :::info
     epoch 15
-    84.57 %
+    90.21 %
     1968.7 sec
     while lr 0.0001 performance increase
     :::
@@ -54,7 +200,7 @@ auto-encoder + anomaly detection
     and using SGD optim
     :::info
     epoch 5
-    85.43 ~ 86 %
+    90.80 %
     659.4 sec
     :::
 
@@ -62,9 +208,12 @@ auto-encoder + anomaly detection
     unfreeze and re-train trial 47 with small lr (StepLR, step_size=2, gamma=0.1) and using SGD optim
     :::info
     epoch 5
-    85.15 % 
+    90.80 %
     651.5 sec
     :::
+
+----------- Correct Accuracy Updated until Here-----------
+
 
 #### Test run 1
 1. use the SGD+momentum re-run trial 43

@@ -22,7 +22,7 @@ from train import build_argparse, check_argparse
 from dataset import EncoderDataset
 from torch.utils.tensorboard import SummaryWriter
 
-from vae import VAE, loss_function
+# from vae import VAE, loss_function
 
 
 def outSize(img, kernal, stride, padding, transpose = False):
@@ -107,34 +107,28 @@ class autoencoder(nn.Module):
     def __init__(self):
         super(autoencoder, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv2d(3, 64, 3, stride=3, padding=1),  # b, 16, 86
+            nn.Conv2d(3, 32, 3, stride=3, padding=1),  # b, 32, 86
             nn.ReLU(True),
-            nn.MaxPool2d(2, stride=2),  # b, 16, 43 
-            nn.Conv2d(64, 32, 3, stride=2, padding=1),  # b, 8, 22
+            nn.BatchNorm2d(32),
+            nn.MaxPool2d(2, stride=2),  # b, 64, 43 
+            nn.Conv2d(32, 64, 3, stride=2, padding=1),  # b, 64, 22
             nn.ReLU(True),
-            nn.MaxPool2d(2, stride=1)  # b, 8, 21
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(2, stride=1)  # b, 32, 21
         )
-        self.fc_en = nn.Linear(32*21*21, 10)
-        self.act = nn.ReLU(True)
-        self.dropout = nn.Dropout()
-        self.fc_de = nn.Linear(10, 32*21*21)
-
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(32, 16, 3, stride=2),  # b, 16, 5, 5 #43
+            nn.ConvTranspose2d(64, 32, 3, stride=2),  # b, 32, 5, 5 #43
             nn.ReLU(True),
-            nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15 #129
+            nn.BatchNorm2d(32),
+            nn.ConvTranspose2d(32, 16, 5, stride=3, padding=1),  # b, 16, 15, 15 #129
             nn.ReLU(True),
-            nn.ConvTranspose2d(8, 3, 2, stride=2, padding=1),  # b, 1, 28, 28 #256
+            nn.BatchNorm2d(16),
+            nn.ConvTranspose2d(16, 3, 2, stride=2, padding=1),  # b, 3, 28, 28 #256
             nn.Tanh()
         )
 
     def forward(self, x):
         x = self.encoder(x)
-        x = x.view(x.size(0), -1)
-        x = self.act(self.fc_en(x))
-        x = self.dropout(x)
-        x = self.act(self.fc_de(x))
-        x = x.view(-1, 8, 21, 21)
         x = self.decoder(x)
         return x
     
@@ -144,7 +138,7 @@ def build_scheduler(optimizer, name, freeze):
         scheduler = ReduceLROnPlateau(optimizer, mode = 'min', patience=2)
         
     elif name == 'StepLR':
-        scheduler = StepLR(optimizer, step_size=1, gamma=0.1)
+        scheduler = StepLR(optimizer, step_size=2, gamma=0.1)
 
     return scheduler
 
@@ -261,3 +255,46 @@ if __name__ == '__main__':
     start_time = time.time()
     main()
     print(f'\n--- %.1f sec ---\n' % (time.time() - start_time))
+
+
+    # loss inspectation
+    import matplotlib.pyplot as plt
+
+    def dataLoop(model,loader,criterion):
+        losses = []
+        for i, data in enumerate(loader, start=0):
+            input = data[0]
+            output = model(input)
+            loss = criterion(output, input)
+            print(f'loss: %.3f' % (loss.item()))
+            losses += [loss.item()]
+            # if i >= 25:
+            #     break
+        return losses
+
+    with torch.no_grad():
+        model = autoencoder()
+        model.load_state_dict(torch.load(f'/home/rico-li/Job/Metal/model_save/17_autoencoder.pth'))
+        criterion = nn.MSELoss()
+        
+        modes = ['threshold','val_en']
+        all_loss = []
+        for mode in modes:
+            dataset = EncoderDataset(mode=mode)
+            loader = DataLoader(dataset, shuffle=True)
+            losses = dataLoop(model, loader, criterion)
+            all_loss += [losses]
+
+        weight_thres = np.ones_like(all_loss[0])/float(len(all_loss[0]))
+        weight_valen = np.ones_like(all_loss[1])/float(len(all_loss[1]))
+
+        plt.hist(all_loss[0], bins=20, histtype='step', alpha=0.75, fill=True, label=modes[0], weights = weight_thres)
+        plt.hist(all_loss[1], bins=20, histtype='step', alpha=0.75, fill=True, label=modes[1], weights = weight_valen)
+        plt.legend()
+        plt.xlabel('loss')
+        plt.ylabel('Frequency')
+        plt.title(f'combined_loss')
+        plt.savefig(f'/home/rico-li/Job/Metal/auto_encoder_loss_histogram/combined_loss_batchnormadd')
+        plt.show()
+
+        
