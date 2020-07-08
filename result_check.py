@@ -10,7 +10,7 @@ from dataset import MetalDataset
 from utils import cluster2target
 
 def confusionMatrix(model_path, model_name, mode, cluster_img, 
-                    output_class, plotclass, cluster_img_val=False,merge=True):
+                    output_class, plotclass, cluster_img_val=False, merge=True):
     model = MetalModel(model_name = model_name, hidden_dim=256, 
                         activation='relu', output_class=output_class)
     model.load_state_dict(torch.load(model_path))
@@ -63,7 +63,10 @@ if __name__ == '__main__':
     cluster_img_val = True
     merge = True
 
-    c_matrix = confusionMatrix(model_path='/home/rico-li/Job/Metal/model_save/69_se_resnext101_32x4d.pth', 
+    local_path = '/home/rico-li/Job/Metal/model_save/69_se_resnext101_32x4d.pth'
+    server_path = '/home/aiuser/Job/MetalClassification/mode_save/69_se_resnext101_32x4d.pth'
+
+    c_matrix = confusionMatrix(model_path=, 
                     model_name='se_resnext101_32x4d', mode=mode, 
                     cluster_img = cluster_img, output_class=output_class, 
                     plotclass=plotclass, merge=merge, cluster_img_val=cluster_img_val)
