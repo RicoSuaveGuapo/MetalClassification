@@ -100,6 +100,73 @@ class MetalDataset(Dataset):
 
         return image, label, image_name
 
+class BinaryDataset(Dataset):
+    def __init__(self, mode='train', transform = None, val_split = 0.3, test_spilt = 0.1,
+                image_size = 256, seed = 42, task='1113others'):
+        assert mode in ['train', 'test', 'val']
+        assert task in ['1113others', '1113'], 'no such task'
+        super().__init__()
+        path = os.getcwd()+'/Image'
+        class_names = os.listdir(path)
+        class_names.sort()
+        if task == '1113':
+            print('Dealing with 1113 task now')
+            class_names = [name for name in class_names if (name == 'TTA') or (name == 'TTP')]
+        else:
+            print('Dealing with 1113others task now')
+            pass
+
+        label = []
+        image_path = []
+        img_names = []
+        np.random.seed(seed)  # fix the train val test set.
+        for i, class_name in enumerate(class_names):
+            image_names = os.listdir(f'{path}/{class_name}')
+            img_names += image_names 
+            image_path += [f'{path}/{class_name}/{image_name}' for image_name in image_names]
+            if task == '1113others':
+                if (class_name == 'TTA') or (class_name == 'TTP'):
+                    label += [0] * len(image_names)
+                else:
+                    label += [1] * len(image_names)
+            else:
+                if class_name == 'TTA':
+                    label += [0] * len(image_names)
+                else: # TTP class
+                    label += [1] * len(image_names)
+
+
+        self.index_list = train_val_test_index(label, mode, val_split, test_spilt)
+        self.label = [label[i] for i in self.index_list]
+        self.data_path = [image_path[i] for i in self.index_list]
+        self.image_names = [img_names[i] for i in self.index_list]
+        self.mode = mode
+        self.transform = transform
+        self.image_size = image_size
+
+    def __len__(self):
+        return len(self.data_path)
+
+    def classWeight(self):
+        class0 = [i for i in self.label if i == 0] # for 1113 task:'TTA', for 1113others:'TTA' and 'TTP'
+        class1 = [i for i in self.label if i == 1] # for 1113 task:'TTP', for 1113others: others
+        p_class0 = len(class0)/self.__len__()
+        p_class1 = len(class1)/self.__len__()
+        return 1/p_class0, 1/p_class1
+
+    def __getitem__(self, idx):
+        label = torch.tensor(self.label[idx])
+        path_i = self.data_path[idx]
+        image = cv2.imread(path_i, cv2.IMREAD_COLOR)
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        image_name = self.image_names[idx]
+        if self.transform:
+            image = get_transfrom(image, crop_size=self.image_size) 
+        else:
+            image = test_transfrom(image, size=self.image_size)
+
+        return image, label, image_name
+
 class EncoderDataset(Dataset):
     def __init__(self, mode, val_en_spilt = 0.2, val_an_spilt = 0.25, image_size = 256, seed = 42):
         super().__init__()
@@ -196,17 +263,17 @@ class EncoderDataset(Dataset):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     
-    train_dataset = MetalDataset(mode='test', transform=True, cluster_img=False, image_size=256, val_split=0.3, test_spilt=0.1, seed=42)
-    train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=16, shuffle=True)
-    labels = torch.Tensor().type(torch.long)
-    for i, (image, label, image_name) in enumerate(train_dataloader):
-        labels = torch.cat((labels, label))
-        print(label)
-        print(f"{i}-batch")
+    # train_dataset = MetalDataset(mode='test', transform=True, cluster_img=False, image_size=256, val_split=0.3, test_spilt=0.1, seed=42)
+    # train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=16, shuffle=True)
+    # labels = torch.Tensor().type(torch.long)
+    # for i, (image, label, image_name) in enumerate(train_dataloader):
+    #     labels = torch.cat((labels, label))
+    #     print(label)
+    #     print(f"{i}-batch")
 
-    labels = labels.numpy()
-    plt.hist(labels, bins=100, alpha=0.75)
-    plt.show()
+    # labels = labels.numpy()
+    # plt.hist(labels, bins=100, alpha=0.75)
+    # plt.show()
 
 
 
@@ -242,3 +309,17 @@ if __name__ == '__main__':
     #     # img = make_grid(img, nrow=n)
     #     # writer.add_image(f"Original-Up, decor-Down in epoch: {epoch+1}", img, dataformats='CHW')
     # writer.close()
+
+    train_dataset = BinaryDataset(mode='train', transform=True, image_size=256, 
+                                val_split=0.3, test_spilt=0.1, seed=42, task='1113')
+    print(train_dataset.classWeight())
+    # train_dataloader = DataLoader(train_dataset, pin_memory=True, num_workers=os.cpu_count(), batch_size=16, shuffle=True)
+    # labels = torch.Tensor().type(torch.long)
+    # for i, (image, label, image_name) in enumerate(train_dataloader):
+    #     labels = torch.cat((labels, label))
+    #     print(label)
+    #     print(f"{i}-batch")
+
+    # labels = labels.numpy()
+    # plt.hist(labels, bins=100, alpha=0.75)
+    # plt.show()

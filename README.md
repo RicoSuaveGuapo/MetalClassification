@@ -1,5 +1,5 @@
 # Work Log
-## TODO:
+## TODO:1
 1. auto-encoder + anomaly detection
 2. Ensemble
 3. Use domain knowledage
@@ -9,11 +9,136 @@
 7. [Self-supervise learning](https://blog.voidful.tech/paper%20reading/2020/06/28/paper-notes-simclr/?fbclid=IwAR3JN75zoG74O1J-1x2lo4rKrTbF7G0Obsvfb5zp-72J33RG1_2dzytPyZI)
 8. [Early Stop](https://github.com/Bjarten/early-stopping-pytorch)
 
+## TODO:2
+1. construct a binary classifier for (1) 11 & 13 classes and (2) others (V)
+2. construct a binary classifier for 11 and 13 classes (V)
+3. train the rest of the classes
 
-## Ideas
-* direct image PCA, seperate minor classes.
-* trian the A model with 13 classes (w/o 11 & 13)
-* then trian the B model with only 11 and 13.
+## 7/13 
+### Test run 1 (finish the metal project)
+1. CNNClassifier1113_trial_6
+    :::info
+    resnet152 epoch 10
+    82.10 %
+    204.86 sec
+    ::::
+
+    CNNClassifier1113_trial_7
+    :::info
+    resnet152 epoch 15
+    87.04 %
+    314.89 sec
+    ::::
+
+    CNNClassifier1113_trial_8
+    :::info
+    resnet152 epoch 15 optim Adam
+    80.86 %
+    312.98 sec    
+    ::::
+
+
+    CNNClassifier1113_trial_9
+    :::info
+    resnet152 epoch 20
+    87.96 %
+    415.64
+    ::::
+
+
+
+## 7/10 (Company postone this task.)
+### 2. construct a binary classifier for 11 and 13 classes
+1. CNNClassifier1113_trial_1
+    :::info
+    1 epoch resnet18 optim SGD StepLR
+    89.51 % (low minor class accuracy)
+    20.16 sec
+    :::
+
+    CNNClassifier1113_trial_2
+    :::info
+    8 epoch resnet18 optim SGD StepLR
+    80.56 %
+    141.13 sec
+    :::
+
+    CNNClassifier1113_trial_4
+    :::info
+    8 epoch resnet18 optim SGD ReduceLROnPlateau
+    79.01 %
+    :::
+
+### 1. construct a binary classifier for (1) 11 & 13 classes (2) others
+1.  CNNClassifier_trial_17 (V)
+    :::info
+    8 epoch resnet18 optim SGD StepLR
+    97.53 %
+    952.68 sec
+    :::
+
+2.  using freeze-unfreeze (this method does not work very well in small model)
+
+    CNNClassifier_trial_18
+    freeze
+    :::info
+    5 epoch resnet18 optim SGD StepLR
+    92.44 %
+    597.40 sec
+    :::
+
+    CNNClassifier_trial_19
+    unfreeze
+    :::info
+    8 epoch resnet18 optim SGD StepLR
+    97.45 %
+    949.98 sec
+    :::
+
+## 7/9
+### 1. binary classifier
+ratio of 11 & 13 vs other: 1:4 -> ~80 % baseline
+1. Use kmean on feature maps, to seperate 11 & 13 from other.
+    :::info
+    74.94 %
+    :::
+2. using CNN model
+    
+    CNNClassifier_trial_3
+    :::info
+    1 epoch resnet18
+    85.51 %
+    120.92 sec
+    :::
+
+    CNNClassifier_trial_4
+    :::info
+    4 epoch resnet18
+    93.03 %
+    471.69 sec
+    :::
+3. Using weightloss
+
+    CNNClassifier_trial_6
+    :::info
+    1 epoch resnet18
+    91.66 %
+    119.36 sec
+    :::
+
+    CNNClassifier_trial_10
+    :::info
+    2 epoch resnet152
+    85.12 %
+    741.58 sec    
+    :::
+
+    CNNClassifier_trial_12
+    :::info
+    5 epoch resnet18 optim SGD
+    96.00 %
+    593.48 sec
+    :::
 
 
 ## IMPORANT UPDATED (7/8)
@@ -321,7 +446,8 @@ k_numbers = [3,3,2,4,4,4,2,2,3,2,0,4,0,0,0]
 2. features from imagenet (V)
     1. well seperate!
     2. kmean can have good seperations
-
+* `oneDfea_train_metal_trained_False` is feature maps
+* `oneDfea_lab_train_metal_trained_False` their corresponded labels
 
 ## 6/23
 #### Test run 1 (trial 25)

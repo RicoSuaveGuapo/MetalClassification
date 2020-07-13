@@ -170,7 +170,8 @@ def nakeEyesCheck(newlab_path, name_path, show_id):
     plt.show()
 
 
-def visual_kmean_pca(fea_path, old_label_path, new_label_path=None, name_path=None,label_i=None, n_components=2, all=False):
+def visual_kmean_pca(fea_path, old_label_path, new_label_path=None, 
+                    name_path=None,label_i=None, n_components=2, all=False):
     oneDfea = torch.load(fea_path)
     labels = torch.load(old_label_path)
     feanamefile = open(name_path)
@@ -220,12 +221,12 @@ if __name__ == '__main__':
         # k_num_list = [3,3,2,4,4,4,2,2,3,2, 0, 4, 0, 0, 0]
         # TODO: Combining class 11 and 13 to class
         #                [0,1,2,3,4,5,6,7,8,9,10,11,12,13]
-        k_num_list   = [3,3,2,4,4,4,2,2,3,2, 0, 4, 0, 0]
+        # k_num_list   = [3,3,2,4,4,4,2,2,3,2, 0, 4, 0, 0]
 
-        newlabel = kmean('oneDfea_combine_True', 'oneDfea_lab_combine_True', 'oneDfea_name_combine_True.txt',
-                        k_num_list, mode='train')
-        print(newlabel.shape)
-        print(f'time: %.2f' % (time.time() - start_time))
+        # newlabel = kmean('oneDfea_combine_True', 'oneDfea_lab_combine_True', 'oneDfea_name_combine_True.txt',
+        #                 k_num_list, mode='train')
+        # print(newlabel.shape)
+        # print(f'time: %.2f' % (time.time() - start_time))
         
         # cluster
         # start_time = time.time()
@@ -236,9 +237,9 @@ if __name__ == '__main__':
 
 
         # PCA
-        # visual_kmean_pca('oneDfea_train_metal_trained_False', 'oneDfea_lab_train_metal_trained_False', 
-        #                   'oneDfea_newlab_train_metal_train_False_13changed', 'oneDfea_name_train_metal_trained_False.txt', 
-        #                   n_components=2, label_i=9)
+        visual_kmean_pca('oneDfea_train_metal_trained_False', 'oneDfea_lab_train_metal_trained_False', 
+                          'oneDfea_newlab_train_metal_train_False_13changed', 'oneDfea_name_train_metal_trained_False.txt', 
+                          n_components=2, label_i=9)
 
         # --- nake eyes verify
         # nakeEyesCheck('oneDfea_newlab_train', 'oneDfea_name_train.txt', 0)

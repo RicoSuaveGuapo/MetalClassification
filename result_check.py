@@ -6,11 +6,12 @@ from torch.utils.data import DataLoader
 from sklearn.metrics import confusion_matrix
 
 from model import MetalModel
-from dataset import MetalDataset
+from dataset import MetalDataset, BinaryDataset
 from utils import cluster2target
 
 def confusionMatrix(model_path, model_name, mode, cluster_img, 
-                    output_class, plotclass, cluster_img_val=False, merge=True):
+                    output_class, plotclass, dataset=MetalDataset, 
+                    cluster_img_val=False, merge=True, task=None):
     model = MetalModel(model_name = model_name, hidden_dim=256, 
                         activation='relu', output_class=output_class)
     model.load_state_dict(torch.load(model_path))
@@ -19,7 +20,10 @@ def confusionMatrix(model_path, model_name, mode, cluster_img,
     model = model.cuda()
     
     with torch.no_grad():
-        dataset = MetalDataset(mode=mode, cluster_img=cluster_img)
+        if dataset == MetalDataset:
+            dataset = dataset(mode=mode, cluster_img=cluster_img)
+        else:
+            dataset = dataset(mode=mode, task=task)
         dataloader = DataLoader(dataset, batch_size=32, shuffle=True, 
                                 pin_memory=True, num_workers=2*os.cpu_count())
 
@@ -56,14 +60,17 @@ def confusionMatrix(model_path, model_name, mode, cluster_img,
 
 if __name__ == '__main__':
     start_time = time.time()
-    mode = 'test'
-    output_class = 36
-    plotclass = 14
+    mode = 'val'
+    output_class = 2
+    plotclass = 2
     cluster_img = False
-    cluster_img_val = True
-    merge = True
+    cluster_img_val = False
+    merge = False
+    task = '1113'
+    exp = 9
+    model_name = 'resnet152'
 
-    local_path = '/home/rico-li/Job/Metal/model_save/69_se_resnext101_32x4d.pth'
+    local_path = f'/home/rico-li/Job/Metal/model_save/CNNClassifier1113_{model_name}_{exp}.pth'
     server_path = '/home/aiuser/Job/MetalClassification/mode_save/69_se_resnext101_32x4d.pth'
     
     if os.getcwd() == '/home/rico-li/Job/Metal':
@@ -71,10 +78,10 @@ if __name__ == '__main__':
     else:
         path = server_path
 
-    c_matrix = confusionMatrix(model_path=path, 
-                    model_name='se_resnext101_32x4d', mode=mode, 
+    c_matrix = confusionMatrix(model_path=path, dataset=BinaryDataset,
+                    model_name=model_name, mode=mode, 
                     cluster_img = cluster_img, output_class=output_class, 
-                    plotclass=plotclass, merge=merge, cluster_img_val=cluster_img_val)
+                    plotclass=plotclass, merge=merge, cluster_img_val=cluster_img_val, task=task)
     
     import matplotlib.pyplot as plt
 
